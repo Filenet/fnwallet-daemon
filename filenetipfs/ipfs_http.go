@@ -42,19 +42,22 @@ var (
 	}
 )
 
-func SaveFileToIpfs(fileName string, file io.Reader) (*merkle.LeafNodes, error) {
+func SaveFileToIpfs(fileName string, file io.Reader) (*merkle.LeafNodes, *IpfsFileInfo, error) {
 	body, err := uploadFile(IpfsAddPath, nil, "path", fileName, file)
+	if err != nil {
+		return nil, nil, err
+	}
 	var result = new(IpfsFileInfo)
 	var list = new(merkle.LeafNodes)
 	err = json.Unmarshal(body, result)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	err = hashList(result.Hash, list)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return list, nil
+	return list, result,nil
 }
 
 func hashList(hash string, list *merkle.LeafNodes) error {

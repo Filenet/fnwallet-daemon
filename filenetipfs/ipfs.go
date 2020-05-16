@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"fnv3/test/merkle"
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
@@ -12,11 +13,23 @@ import (
 )
 
 var (
-	IpfsAddPath      = "http://127.0.0.1:5001/api/v0/add"
-	IpfsLsPath       = "http://127.0.0.1:5001/api/v0/ls"
-	IpfsBlockRawPath = "http://127.0.0.1:5001/api/v0/block/get"
+	IpfsAddPath      = fmt.Sprintf("http://127.0.0.1:%s/api/v0/add", "5001")
+	IpfsLsPath       = fmt.Sprintf("http://127.0.0.1:%s/api/v0/ls", "5001", "5001")
+	IpfsBlockRawPath = fmt.Sprintf("http://127.0.0.1:%s/api/v0/block/get", "5001")
 	ContentType      = make(map[uint8]string)
 )
+
+func SetIpfsAddPath(port string) {
+	IpfsAddPath = fmt.Sprintf("http://127.0.0.1:%s/api/v0/add", port)
+}
+
+func SetIpfsLsPath(port string) {
+	IpfsLsPath = fmt.Sprintf("http://127.0.0.1:%s/api/v0/ls", port)
+}
+
+func SetIpfsBlockRawPath(port string) {
+	IpfsBlockRawPath = fmt.Sprintf("http://127.0.0.1:%s/api/v0/block/get", port)
+}
 
 func VerifyHash(ipfsHash string, ipfsBlockRaw []byte) bool {
 	h1, err := mh.Sum(ipfsBlockRaw, mh.SHA2_256, -1)
@@ -56,19 +69,18 @@ func GetIpfsHash(matchHash string, length int) ([]byte, []byte, error) {
 	return ipfsHash, ipfsBlockRaw, nil
 }
 
-
-func SaveFile(file io.Reader, fileName string) error {
-	leafNodes, err := SaveFileToIpfs(fileName, file)
+func SaveFile(file io.Reader, fileName string) (*IpfsFileInfo,error) {
+	leafNodes,res, err := SaveFileToIpfs(fileName, file)
 	if err != nil {
-		panic(err)
+		return nil,err
 	}
 	validLeafNodes, err := leafNodes.ValidLeafNode()
 	if err != nil {
-		return err
+		return nil,err
 	}
 	prepareLeafsNodes, err := merkle.NextMerkleTree()
 	if err != nil {
-		panic(err)
+		return nil,err
 	}
 	*prepareLeafsNodes = append(*prepareLeafsNodes, *validLeafNodes...)
 	length := len(*prepareLeafsNodes)
@@ -83,17 +95,17 @@ func SaveFile(file io.Reader, fileName string) error {
 		}
 		tree, _, err := merkle.NewMerkleTree(leafNodes)
 		if err != nil {
-			panic(err)
+			return nil,err
 		}
 		err = merkle.SaveMerkleTree(tree)
 		if err != nil {
-			return err
+			return nil,err
 		}
 	}
 	if prepareLeafsNodes != nil {
 		if err := merkle.SavePrepareLeafNode(prepareLeafsNodes); err != nil {
-			return err
+			return nil,err
 		}
 	}
-	return nil
+	return res,nil
 }
