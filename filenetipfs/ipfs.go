@@ -69,13 +69,8 @@ func GetIpfsHash(matchHash string, length int) ([]byte, []byte, error) {
 	return ipfsHash, ipfsBlockRaw, nil
 }
 
-<<<<<<< HEAD
 func SaveFile(file io.Reader, fileName string) (*IpfsFileInfo,error) {
 	leafNodes,res, err := SaveFileToIpfs(fileName, file)
-=======
-func SaveFile(file io.Reader, fileName string) error {
-	leafNodes, err := SaveFileToIpfs(fileName, file)
->>>>>>> d38aad9772e396025874325648f06003bd5bdaee
 	if err != nil {
 		return nil,err
 	}
